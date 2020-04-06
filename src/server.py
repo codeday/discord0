@@ -31,6 +31,7 @@ auth0 = oauth.register(
     },
 )
 
+
 @app.route('/callback_auth0')
 def callback_auth():
     auth0.authorize_access_token()
@@ -55,7 +56,7 @@ def login_discord():
 @app.route('/callback_discord')
 def callback_discord():
     discord.callback()
-    return redirect(url_for(".dashboard"))
+    return redirect('/')
 
 
 @app.route('/login_auth0')
@@ -63,26 +64,12 @@ def login_auth0():
     return auth0.authorize_redirect(redirect_uri=os.getenv('CALLBACK_URL'))
 
 
-def requires_auth0(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if 'profile' not in session:
-            return redirect('/')
-        return f(*args, **kwargs)
-    return decorated
-
-
-@app.route('/dashboard')
-@requires_auth0
-def dashboard():
-    print(session)
-    return render_template('dashboard.html',
-                           userinfo=session['jwt_payload'],
-                           discord=discord)
-
-
-@app.route('/bind')
+@app.route('/')
 def bind():
+    if 'profile' not in session:
+        return redirect('login_auth0')
+    if not discord.authorized:
+        return redirect('login_discord')
     domain = os.getenv('AUTH_DOMAIN')
     client_id = os.getenv('AUTH_CLIENT_ID')
     client_secret = os.getenv('AUTH_CLIENT_SECRET')
@@ -91,11 +78,8 @@ def bind():
                                          client_secret, 'https://{}/api/v2/'.format(domain))['access_token']
     mgmt = Auth0(domain, token)
     mgmt.users.update(session['profile']['user_id'], {'user_metadata': {'discord_id': str(discord.fetch_user().id)}})
-
-@app.route('/logout_auth0')
-def logout_auth0():
-    # Clear session stored data
+    out = f"{session['profile']['name']}'s CodeDay account has been successfully associated with the Discord account \
+{discord.fetch_user().username}#{discord.fetch_user().discriminator}! \n\
+Please close this window"
     session.clear()
-    # Redirect user to logout endpoint
-    params = {'returnTo': url_for('dashboard', _external=True), 'client_id': os.getenv('AUTH_CLIENT_ID')}
-    return redirect(auth0.api_base_url + '/v2/logout?' + urlencode(params))
+    return out
