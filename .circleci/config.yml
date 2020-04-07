@@ -1,13 +1,6 @@
 version: 2.1
 workflows:
   build:
-    jobs:
-      - build:
-          filters:
-            branches:
-              only: master
-          context: discord0
-  build:
     docker:
       - image: circleci/python:3.7
     steps:
