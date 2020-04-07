@@ -74,10 +74,22 @@ def bind():
     token = get_token.client_credentials(client_id,
                                          client_secret, 'https://{}/api/v2/'.format(domain))['access_token']
     mgmt = Auth0(domain, token)
-    mgmt.users.update(session['profile']['user_id'], {'user_metadata': {'discord_id': str(discord.fetch_user().id)}})
-    out = f"{session['profile']['name']}'s CodeDay account has been successfully associated with the Discord account \
+    userlist = mgmt.users.list(q=f'user_metadata.discord_id:"{str(discord.fetch_user().id)}"')
+    if userlist['length'] == 0:
+        mgmt.users.update(session['profile']['user_id'],
+                          {'user_metadata': {'discord_id': str(discord.fetch_user().id)}})
+        out = f"{session['profile']['name']}'s CodeDay account has been successfully associated with the Discord account \
 {discord.fetch_user().username}#{discord.fetch_user().discriminator}! \n\
 Please close this window"
+    elif userlist['length'] == 1:
+        if userlist['users'][0]['user_id'] == session['profile']['user_id']:
+            out = "Your account has already been linked!"
+        else:
+            out = '''This Discord account has already been linked to a CodeDay account.
+If this was in error, please contact a staff member'''
+    else:
+        out = '''An unhandled error occurred linking your accounts.
+Please contact a staff member so we can resolve the issue'''
     session.clear()
     return out
 
