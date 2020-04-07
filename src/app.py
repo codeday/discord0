@@ -1,9 +1,11 @@
 import os
+
+from auth0.v3.authentication import GetToken
+from auth0.v3.management import Auth0
+from authlib.integrations.flask_client import OAuth
 from flask import Flask, redirect, session
 from flask_discord import DiscordOAuth2Session
-from auth0.v3.management import Auth0
-from auth0.v3.authentication import GetToken
-from authlib.integrations.flask_client import OAuth
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'VERYSECRETMUCHWOW')
@@ -78,3 +80,6 @@ def bind():
 Please close this window"
     session.clear()
     return out
+
+
+app = ProxyFix(app, x_for=1, x_host=1)
