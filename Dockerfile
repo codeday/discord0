@@ -6,6 +6,4 @@ RUN pip install -r requirements.txt
 COPY src /app/src
 
 WORKDIR /app
-EXPOSE 8000
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["gunicorn","--bind","0.0.0.0:8000","src.app:app"]
