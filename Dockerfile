@@ -6,4 +6,6 @@ RUN pip install -r requirements.txt
 COPY src /app/src
 
 WORKDIR /app
-CMD ["python3","-m","flask","run"]
+EXPOSE 8000
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+ENTRYPOINT ["/docker-entrypoint.sh"]
