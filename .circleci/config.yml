@@ -1,0 +1,24 @@
+version: 2.1
+workflows:
+  build:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: master
+          context: discord0
+  build:
+    docker:
+      - image: circleci/python:3.7
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - checkout
+      - run: |
+          TAG=$CIRCLE_SHA1
+          DOCKER_REPO=$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+          docker build -t $DOCKER_REPO:$TAG .
+          docker tag $DOCKER_REPO:$TAG $DOCKER_REPO:latest
+          echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+          docker push $DOCKER_REPO:$TAG
+          docker push $DOCKER_REPO:latest
