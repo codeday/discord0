@@ -6,7 +6,7 @@ workflows:
           filters:
             branches:
               only: master
-          context: discord0
+          context: Docker Hub
 jobs:
   build:
     docker:
