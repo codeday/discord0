@@ -1,14 +1,9 @@
-from functools import wraps
 import os
-import requests
-from flask import render_template
-from flask import session
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, session
 from flask_discord import DiscordOAuth2Session
 from auth0.v3.management import Auth0
 from auth0.v3.authentication import GetToken
 from authlib.integrations.flask_client import OAuth
-from six.moves.urllib.parse import urlencode
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'VERYSECRETMUCHWOW')
