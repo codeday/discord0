@@ -3,7 +3,7 @@ import os
 from auth0.v3.authentication import GetToken
 from auth0.v3.management import Auth0
 from authlib.integrations.flask_client import OAuth
-from flask import Flask, redirect, session
+from flask import Flask, redirect, session, url_for
 from flask_discord import DiscordOAuth2Session
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -53,7 +53,7 @@ def login_discord():
 @app.route('/callback_discord')
 def callback_discord():
     discord.callback()
-    return redirect('/')
+    return redirect(url_for('/'))
 
 
 @app.route('/login_auth0')
