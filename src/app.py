@@ -3,9 +3,12 @@ import os
 from auth0.v3.authentication import GetToken
 from auth0.v3.management import Auth0
 from authlib.integrations.flask_client import OAuth
+from discord_webhook import DiscordWebhook
 from flask import Flask, redirect, session
 from flask_discord import DiscordOAuth2Session
 from werkzeug.middleware.proxy_fix import ProxyFix
+
+webhookurl = os.getenv('DISCORD_WEBHOOK')
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'VERYSECRETMUCHWOW')
@@ -81,6 +84,7 @@ def bind():
         out = f"{session['profile']['name']}'s CodeDay account has been successfully associated with the Discord account \
 {discord.fetch_user().username}#{discord.fetch_user().discriminator}! \n\
 Please close this window"
+        DiscordWebhook(url=webhookurl, content=f'a~update <@{str(discord.fetch_user().id)}>').execute()
     elif userlist['length'] == 1:
         if userlist['users'][0]['user_id'] == session['profile']['user_id']:
             out = "Your account has already been linked!"
