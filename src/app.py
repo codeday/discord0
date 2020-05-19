@@ -84,6 +84,8 @@ def bind():
         out = f"{session['profile']['name']}'s CodeDay account has been successfully associated with the Discord account \
 {discord.fetch_user().username}#{discord.fetch_user().discriminator}! \n\
 Please close this window"
+        DiscordWebhook(url=webhookurl, content=f'a~update <@{str(discord.fetch_user().id)}>').execute()
+
     elif userlist['length'] == 1:
         if userlist['users'][0]['user_id'] == session['profile']['user_id']:
             out = "Your account has already been linked!"
