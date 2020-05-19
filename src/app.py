@@ -99,7 +99,6 @@ Please contact a staff member so we can resolve the issue'''
 @app.route('/update_hook', methods=['POST'])
 def update_hook():
     data = request.json
-    print(data)
     try:
         DiscordWebhook(url=webhookurl,
                        content=f"a~update <@{data['response']['body']['user_metadata']['discord_id']}>").execute()
