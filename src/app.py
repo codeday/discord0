@@ -100,9 +100,11 @@ Please contact a staff member so we can resolve the issue'''
 def update_hook():
     data = request.json
     print(data)
-    if data['request']['auth']['user']['user_metadata']['discord_id']:
+    try:
         DiscordWebhook(url=webhookurl,
-                       content=f"a~update <@{data['auth']['user']['user_metadata']['discord_id']}>").execute()
+                       content=f"a~update <@{data['response']['body']['user_metadata']['discord_id']}>").execute()
+    except:  # Yes this is bad but whatever
+        pass
     return
 
 
