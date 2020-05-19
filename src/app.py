@@ -4,7 +4,7 @@ from auth0.v3.authentication import GetToken
 from auth0.v3.management import Auth0
 from authlib.integrations.flask_client import OAuth
 from discord_webhook import DiscordWebhook
-from flask import Flask, redirect, session, request
+from flask import Flask, redirect, session, request, make_response
 from flask_discord import DiscordOAuth2Session
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -105,7 +105,7 @@ def update_hook():
                        content=f"a~update <@{data['response']['body']['user_metadata']['discord_id']}>").execute()
     except:  # Yes this is bad but whatever
         pass
-    return
+    return make_response("OK", 200)
 
 
 app = ProxyFix(app, x_for=1, x_host=1)
