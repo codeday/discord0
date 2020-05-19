@@ -96,12 +96,11 @@ Please contact a staff member so we can resolve the issue'''
     session.clear()
     return out
 
-
 @app.route('/update_hook', methods=['POST'])
 def update_hook():
     data = request.json
     print(data)
-    if data['auth']['user']['user_metadata']['discord_id']:
+    if data['request']['auth']['user']['user_metadata']['discord_id']:
         DiscordWebhook(url=webhookurl,
                        content=f"a~update <@{data['auth']['user']['user_metadata']['discord_id']}>").execute()
     return
