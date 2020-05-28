@@ -1,4 +1,5 @@
 import os
+from time import sleep
 
 from auth0.v3.authentication import GetToken
 from auth0.v3.management import Auth0
@@ -101,11 +102,16 @@ Please contact a staff member so we can resolve the issue'''
 @app.route('/update_hook', methods=['POST'])
 def update_hook():
     data = request.json
-    try:
-        DiscordWebhook(url=webhookurl,
-                       content=f"a~update <@{data['response']['body']['user_metadata']['discord_id']}>").execute()
-    except:  # Yes this is bad but whatever
-        pass
+    webhook = DiscordWebhook(url=webhookurl,
+                             content=f"a~update <@{data['response']['body']['user_metadata']['discord_id']}>")
+    response = webhook.execute()
+    while not response.ok:
+        if response.status_code == 429:
+            sleep(int(response['retry_after']) / 1000)
+            response = webhook.execute()
+        else:
+            print(response)
+            break
     return make_response("OK", 200)
 
 
