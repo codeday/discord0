@@ -107,7 +107,7 @@ def update_hook():
     response = webhook.execute()
     while not response.ok:
         if response.status_code == 429:
-            sleep(int(response['retry_after']) / 1000)
+            sleep(1)
             response = webhook.execute()
         else:
             print(response)
