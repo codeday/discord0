@@ -1,6 +1,8 @@
 import os
 from time import sleep
 
+from threading import Thread
+
 from auth0.v3.authentication import GetToken
 from auth0.v3.management import Auth0
 from authlib.integrations.flask_client import OAuth
@@ -78,14 +80,16 @@ def bind():
     token = get_token.client_credentials(client_id,
                                          client_secret, 'https://{}/api/v2/'.format(domain))['access_token']
     mgmt = Auth0(domain, token)
-    userlist = mgmt.users.list(q=f'user_metadata.discord_id:"{str(discord.fetch_user().id)}"')
+    userlist = mgmt.users.list(
+        q=f'user_metadata.discord_id:"{str(discord.fetch_user().id)}"')
     if userlist['length'] == 0:
         mgmt.users.update(session['profile']['user_id'],
                           {'user_metadata': {'discord_id': str(discord.fetch_user().id)}})
         out = f"{session['profile']['name']}'s CodeDay account has been successfully associated with the Discord account \
 {discord.fetch_user().username}#{discord.fetch_user().discriminator}! \n\
 Please close this window"
-        DiscordWebhook(url=webhookurl, content=f'a~update <@{str(discord.fetch_user().id)}>').execute()
+        DiscordWebhook(
+            url=webhookurl, content=f'a~update <@{str(discord.fetch_user().id)}>').execute()
 
     elif userlist['length'] == 1:
         if userlist['users'][0]['user_id'] == session['profile']['user_id']:
@@ -99,9 +103,8 @@ Please contact a staff member so we can resolve the issue'''
     session.clear()
     return out
 
-@app.route('/update_hook', methods=['POST'])
-def update_hook():
-    data = request.json
+
+def async_update(data):
     webhook = DiscordWebhook(url=webhookurl,
                              content=f"a~update <@{data['response']['body']['user_metadata']['discord_id']}>")
     response = webhook.execute()
@@ -111,7 +114,12 @@ def update_hook():
             response = webhook.execute()
         else:
             print(response)
-            break
+
+
+@app.route('/update_hook', methods=['POST'])
+def update_hook():
+    data = request.json
+    Thread(target=async_update, args=tuple([data])).start()
     return make_response("OK", 200)
 
 
