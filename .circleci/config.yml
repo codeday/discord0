@@ -25,3 +25,6 @@ jobs:
           docker push $DOCKER_REPO:latest
       - slack/status:
           webhook: ${DISCORD_WEBHOOK}
+
+orbs:
+  slack: circleci/slack@3.4.2
