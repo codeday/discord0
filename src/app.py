@@ -1,7 +1,7 @@
 import os
-from time import sleep
-
+import sys
 from threading import Thread
+from time import sleep
 
 from auth0.v3.authentication import GetToken
 from auth0.v3.management import Auth0
@@ -9,9 +9,18 @@ from authlib.integrations.flask_client import OAuth
 from discord_webhook import DiscordWebhook
 from flask import Flask, redirect, session, request, make_response
 from flask_discord import DiscordOAuth2Session
+from raygun4py import raygunprovider
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 webhookurl = os.getenv('DISCORD_WEBHOOK')
+
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    cl = raygunprovider.RaygunSender(os.getenv("RAYGUN_TOKEN"))
+    cl.send_exception(exc_info=(exc_type, exc_value, exc_traceback))
+
+
+sys.excepthook = handle_exception
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'VERYSECRETMUCHWOW')
