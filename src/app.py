@@ -1,16 +1,17 @@
+import asyncio
 import os
 import sys
 from threading import Thread
 from time import sleep
 
-from auth0.v3.authentication import GetToken
-from auth0.v3.management import Auth0
 from authlib.integrations.flask_client import OAuth
 from discord_webhook import DiscordWebhook
 from flask import Flask, redirect, session, request, make_response
 from flask_discord import DiscordOAuth2Session
 from raygun4py import raygunprovider
 from werkzeug.middleware.proxy_fix import ProxyFix
+
+from services.gqlservice import GQLService
 
 webhookurl = os.getenv('DISCORD_WEBHOOK')
 
@@ -78,37 +79,52 @@ def login_auth0():
 
 @app.route('/')
 def bind():
+    out = "An unhandled error occurred linking your accounts. Please contact a staff member so we can resolve " \
+          "the issue."
     if 'profile' not in session:
         return redirect('login_auth0')
-    if not discord.authorized:
-        return redirect('login_discord')
-    domain = os.getenv('AUTH_DOMAIN')
-    client_id = os.getenv('AUTH_CLIENT_ID')
-    client_secret = os.getenv('AUTH_CLIENT_SECRET')
-    get_token = GetToken(domain)
-    token = get_token.client_credentials(client_id,
-                                         client_secret, 'https://{}/api/v2/'.format(domain))['access_token']
-    mgmt = Auth0(domain, token)
-    userlist = mgmt.users.list(
-        q=f'user_metadata.discord_id:"{str(discord.fetch_user().id)}"')
-    if userlist['length'] == 0:
-        mgmt.users.update(session['profile']['user_id'],
-                          {'user_metadata': {'discord_id': str(discord.fetch_user().id)}})
-        out = f"{session['profile']['name']}'s CodeDay account has been successfully associated with the Discord account \
-{discord.fetch_user().username}#{discord.fetch_user().discriminator}! \n\
-Please close this window"
-        DiscordWebhook(
-            url=webhookurl, content=f'a~update <@{str(discord.fetch_user().id)}>').execute()
 
-    elif userlist['length'] == 1:
-        if userlist['users'][0]['user_id'] == session['profile']['user_id']:
-            out = "Your account has already been linked!"
-        else:
-            out = '''This Discord account has already been linked to a CodeDay account.
-If this was in error, please contact a staff member'''
-    else:
-        out = '''An unhandled error occurred linking your accounts.
-Please contact a staff member so we can resolve the issue'''
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    user_check = loop.run_until_complete(GQLService.get_user_from_user_id(session['profile']['user_id']))
+
+    # if GraphQL doesn't find an account for some reason
+    if not user_check:
+        loop.close()
+        session.clear()
+        return out
+
+    # if CodeDay account is already linked to a Discord account
+    if user_check["discordId"]:
+        loop.close()
+        session.clear()
+        return "This CodeDay account is already connected to a Discord account. If this was in error, " \
+               "please contact a staff member."
+
+    # if user hasn't logged into discord
+    if not discord.authorized:
+        loop.close()
+        return redirect('login_discord')
+
+    discord_check = loop.run_until_complete(GQLService.get_user_from_discord_id(discord.fetch_user().id))
+
+    # if Discord account is already linked to a CodeDay account
+    if discord_check and "id" in discord_check:
+        session.clear()
+        loop.close()
+        return "This Discord account has already been linked to a CodeDay account. If this was in error, " \
+               "please contact a staff member."
+
+    link_discord = loop.run_until_complete(
+        GQLService.link_discord(session['profile']['user_id'], discord.fetch_user().id))
+
+    # if GraphQL links Discord account successfully
+    if link_discord:
+        out = f"{session['profile']['name']}'s CodeDay account has been successfully associated with the Discord account \
+                {discord.fetch_user().username}#{discord.fetch_user().discriminator}! \n\
+                Please close this window."
+
+    loop.close()
     session.clear()
     return out
 
