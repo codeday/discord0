@@ -6,4 +6,4 @@ RUN pip install -r requirements.txt
 COPY src /app/src
 
 WORKDIR /app
-CMD ["gunicorn","--bind","0.0.0.0:8000","src.app:app"]
+CMD ["gunicorn","--bind","0.0.0.0:8000","--chdir","/app/src","src.app:app"]
