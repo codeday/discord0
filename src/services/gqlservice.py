@@ -1,6 +1,5 @@
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
-from gql.transport.websockets import WebsocketsTransport
 import time
 from jwt import encode
 from os import getenv
@@ -54,18 +53,6 @@ class GQLService:
         client = Client(transport=transport, fetch_schema_from_transport=True)
         return await client.execute_async(GQLService.make_query(query, with_fragments=with_fragments),
                                           variable_values=variable_values)
-
-    @staticmethod
-    async def subscribe_ws(query, variable_values=None, with_fragments=True):
-        token = GQLService.make_token()
-        transport = WebsocketsTransport(
-            url='ws://graph.codeday.org/subscriptions',
-            init_payload={'authorization': 'Bearer ' + token}
-        )
-        session = Client(transport=transport, fetch_schema_from_transport=True)
-        async for result in session.subscribe_async(GQLService.make_query(query, with_fragments=with_fragments),
-                                                    variable_values=variable_values):
-            yield result
 
     @staticmethod
     async def get_user_from_discord_id(discord_id):
