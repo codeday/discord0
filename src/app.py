@@ -98,8 +98,7 @@ def bind():
     if user_check["discordId"]:
         loop.close()
         session.clear()
-        return "This CodeDay account is already connected to a Discord account. If this was in error, " \
-               "please contact a staff member."
+        return redirect('https://www.codeday.org/help/article/1N8IBXVNNojWtfiJf6QvX3')
 
     # if user hasn't logged into discord
     if not discord.authorized:
@@ -112,8 +111,7 @@ def bind():
     if discord_check and "id" in discord_check:
         session.clear()
         loop.close()
-        return "This Discord account has already been linked to a CodeDay account. If this was in error, " \
-               "please contact a staff member."
+        return redirect('https://www.codeday.org/help/article/1N8IBXVNNojWtfiJf6QvX3')
 
     link_discord = loop.run_until_complete(
         GQLService.link_discord(session['profile']['user_id'], discord.fetch_user().id))
